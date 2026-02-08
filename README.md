@@ -9,7 +9,7 @@
 
 ## Abstract
 
-This repository contains the official implementation of the study **“Predicting building types using OpenStreetMap.”** We propose a supervised learning-based approach to fill the gap in descriptive building attributes within OpenStreetMap (OSM). While OSM provides good geometric coverage, semantic information is often sparse. This model leverages geometric properties, topological relationships, and available OSM tags to classify building footprints into **residential** or **non-residential** types without manual intervention
+This repository contains the official implementation of the study **“Predicting building types using OpenStreetMap.”** We propose a supervised learning-based approach to fill the gap in descriptive building attributes within OpenStreetMap (OSM). While OSM provides good geometric coverage, semantic information is often sparse. This model leverages geometric properties, topological relationships, and available OSM tags to classify building footprints into **residential** or **non-residential** types without manual intervention.
 
 ---
 
