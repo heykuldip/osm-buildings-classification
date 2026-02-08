@@ -96,6 +96,6 @@ If you use this code, methodology, or data in your research, please cite:
 
 ## Acknowledgements
 
-This work is supported by the National Science Foundation Grant No. 2109647 titled “Data-Driven Modeling to Improve Understanding of Human Behavior, Mobility, and Disease Spread”
+This work is supported by the National Science Foundation Grant No. 2109647 titled “Data-Driven Modeling to Improve Understanding of Human Behavior, Mobility, and Disease Spread”.
 
 Computing resources were provided by the Office of Research Computing at George Mason University.
