@@ -63,12 +63,12 @@ The core classification is performed using the **Scikit-Learn Decision Tree Clas
 ## Dataset
 
 Study Areas
-The model is trained and validated on three distinct study areas representing a mix of urban and suburban environments,:
+The model is trained and validated on three distinct study areas representing a mix of urban and suburban environments:
 1. **Fairfax County, Virginia** (Suburban)
 2. **Mecklenburg County, North Carolina** (Suburban)
 3. **City of Boulder, Colorado** (Urban)
    
-Data Sources
+Data Sources:
 - **Input Data:** OpenStreetMap PBF files (volunteered geographic information).
 - **Ground Truth**: Official building footprint data obtained from the respective administrative spatial data portals.
 - **Availability:** A repository of the processed data used in this study is available at: https://osf.io/3j46v/
