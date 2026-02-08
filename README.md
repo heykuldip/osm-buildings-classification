@@ -2,7 +2,7 @@
 
 **Official implementation of the paper:**
 
-> **Predicting building types using OpenStreetMap**, Scientific Reports, Nature Portfolio, 2022
+> **Predicting building types using OpenStreetMap**, *Scientific Reports, Nature Portfolio*, 2022
 > 
 > **Authors:** Kuldip Singh Atwal, Taylor Anderson, Dieter Pfoser, & Andreas Züfle (George Mason University, Emory University)
 ---
