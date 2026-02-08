@@ -1,104 +1,101 @@
-# Near–Real-Time Conflict-Related Fire Detection Using Unsupervised Deep Learning
-##### Based on the RaVAEn model: https://github.com/spaceml-org/RaVAEn
+# Predicting Building Types Using OpenStreetMap
 
 **Official implementation of the paper:**
 
-> **Near–Real-Time Conflict-Related Fire Detection Using Unsupervised Deep Learning and Satellite Imagery**
-> <!-- *Remote Sensing Applications: Society and Environment (RSASE), 2026 -->
-> **Authors:** Kuldip Singh Atwal, Dieter Pfoser, Daniel Rothbart (George Mason University)
-
+> **Predicting building types using OpenStreetMap**
+> <!-- *Scientific Reports, Nature Portfolio, 2022 -->
+> **Authors:** Kuldip Singh Atwal, Taylor Anderson, Dieter Pfoser, & Andreas Züfle (George Mason University, Emory University)
 ---
 
 ## Abstract
 
-This repository contains the official implementation of the study **“Near–Real-Time Conflict-Related Fire Detection Using Unsupervised Deep Learning and Satellite Imagery.”** We adapt the **RaVAEn** framework to detect conflict-related fires and burn scars in Sudan using high-resolution satellite imagery with a **resolution-agnostic Variational Autoencoder (VAE)**.
-
-Unlike the original RaVAEn model designed for coarse-resolution disaster monitoring on-board satellites, this version is optimized for **3 m resolution PlanetScope imagery**, enabling detection of small, fragmented fires in active war zones. The model employs a lightweight, unsupervised approach that learns generalized visual primitives from diverse land-cover data (WorldFloods) and identifies fire-affected areas as anomalies in the latent space. The system delivers actionable insights within **24–30 hours** of image acquisition.
+This repository contains the official implementation of the study **“Predicting building types using OpenStreetMap.”** We propose a supervised learning-based approach to fill the gap in descriptive building attributes within OpenStreetMap (OSM). While OSM provides good geometric coverage, semantic information is often sparse. This model leverages geometric properties, topological relationships, and available OSM tags to classify building footprints into **residential** or **non-residential** types without manual intervention
 
 ---
 
 ## Key Features
 
-- **Resolution-Adaptive Architecture:** Incorporates *Frequency Decomposition*, *Multi-scale Dilated Convolutions*, and *BlurPool (anti-aliased downsampling)* to handle domain shifts between training data (10 m Sentinel-2) and inference data (3 m PlanetScope).
+- **OSM-Only Dependency:** The model relies exclusively on OSM features (geometry and tags), eliminating the bottleneck of acquiring region-specific or proprietary datasets.
 
-- **Unsupervised Learning:** No labeled fire data required. The model learns nominal surface representations and flags deviations via latent-space cosine distance.
+- **Interpretable Classification:** Uses a C4.5 Decision Tree classifier to ensure model transparency, allowing researchers to understand which features (e.g., building size, proximity to roads) discriminate best between classes.
 
-- **Lightweight & Fast:** Designed for operational near–real-time monitoring with end-to-end latency of approximately **24–30 hours**.
+- **Transfer Learning:** The pre-trained classification models are designed to be transferable; a model trained in one region (e.g., Fairfax County) yields high accuracy when tested in alternative regions (e.g., Mecklenburg County) where ground truth data may be unavailable.
 
-- **Data-Scarce Robustness:** Validated on verified conflict incidents in Sudan (e.g., El Fasher, Gandahar Market) where ground truth is inaccessible.
+- **Rich Feature Engineering:** Incorporates spatial context by deriving distance to parking lots, proximity to specific road types, and underlying land use polygons to augment sparse tag data.
 
 ---
 
 ## Methodology
 
-### 1. Preprocessing and Spectral Alignment
+### 1. Data Preprocessing and Extraction
 
-The pipeline processes **4-band PlanetScope imagery** (Red, Green, Blue, NIR).
+The pipeline utilizes **PyOsmium** and **Geopandas** to extract and process building polygons.
 
-- **Normalization:** Inputs are log-transformed to manage high dynamic range and scaled to the `[-1, 1]` interval using the 1st and 99th percentiles of the training data.
+- **Filtering:** Extracts building footprints where the 'building' tag has values, filtering out non-building objects.
 
-- **Tiling:** Imagery is partitioned into non-overlapping **32 × 32 pixel tiles**.
-
----
-
-### 2. Model Architecture
-The core model, defined in `deeper_vae.py`, is a modified Variational Autoencoder that:
-
-1. **Decomposes** inputs into low-frequency structural components and high-frequency texture components.
-2. **Encodes** features using multi-scale atrous (dilated) convolutions to capture context at varying resolutions.
-3. **Projects** representations into a **128-dimensional latent space**.
-
-This design enables robustness to sensor resolution changes and texture fragmentation common in conflict environments.
+- **Meta-categorization:** Maps heterogeneous OSM tags and official ground truth types into binary categories: **Residential** (e.g., apartments, house, dormitory) and **Non-residential** (e.g., commercial, school, industrial, retail).
+  
+- **Spatial Joins:** Maps OSM buildings to ground truth footprints via spatial intersection to create labeled training sets.
 
 ---
 
-### 3. Anomaly Detection
+### 2. Feature Extraction
 
-Inference compares **temporally paired tiles** (Pre-incident vs. Post-incident).
+The model enhances sparse attributes by deriving new geometric and topological features:
 
-- **Metric:** Cosine distance between latent vectors <b>z</b><sub>pre</sub> and <b>z</b><sub>post</sub>.
+- **Geometric Buffers:** Creates buffers at 30m, 60m, and 90m intervals around specific road categories (e.g., residential vs. non-residential roads) to determine proximity.
+- **Parking Proximity:** Calculates the area of nearby parking lots using Jenks natural breaks (bins) and buffers to determine building proximity to parking infrastructure.
+- **Tag Encoding:** Utilizes relevant tags—such as `name`, `source`, `addr:street`, `building:levels`, and `amenity`—treated as binary indicator variables.
+- **Physical Properties:** Includes building footprint area and intersection with land use polygons.
 
-- **Baseline:** A pixel-wise cosine distance method is included as a scientific control.
+---
+
+### 3. Model Architecture
+
+The core classification is performed using the **Scikit-Learn Decision Tree Classifier**.
+
+- **Algorithm:** Binary decision tree (C4.5) using the **Gini index** to measure impurity.
+- **Pruning:** The tree is pruned when additional criteria increase node impurity by no more than 0.01% to prevent overfitting.
+- **Validation:** The model is evaluated using Precision, Recall, and F1-score comparisons against authoritative ground truth data.
 
 ---
 
 ## Dataset
 
-### Training Data — WorldFloods
-
-The model is pre-trained on the **WorldFloods** dataset derived from Sentinel-2 imagery to learn diverse spectral and textural patterns.
-
-- **Source:** https://github.com/spaceml-org/ml4floods
-- **Adaptation:** Stochastic scale augmentation is applied during training to simulate the resolution shift from Sentinel-2 (10 m) to PlanetScope (3 m).
-
----
-
-### Inference Data — PlanetScope
-
-Commercial **PlanetScope Level 3B Ortho Scene (Analytic, 4-band)** imagery is used for inference.
-
-- **Access:** Due to licensing restrictions, PlanetScope imagery for Sudan cannot be shared publicly. Researchers must obtain licenses directly from Planet Labs.
-
-- **Case Studies:** Metadata for the five Sudan conflict incidents (dates and AOIs) is provided in the manuscript.
+Study Areas
+The model is trained and validated on three distinct study areas representing a mix of urban and suburban environments,:
+1. **Fairfax County, Virginia** (Suburban)
+2. **Mecklenburg County, North Carolina** (Suburban)
+3. **City of Boulder, Colorado** (Urban)
+   
+Data Sources
+• **Input Data:** OpenStreetMap PBF files (volunteered geographic information).
+• **Ground Truth**: Official building footprint data obtained from the respective administrative spatial data portals.
+• **Availability:** A repository of the processed data used in this study is available at: https://osf.io/3j46v/
 
 ---
 
 ## Citation
 
-If you use this code, model architecture, or methodology in your research, please cite:
+If you use this code, methodology, or data in your research, please cite:
 
 ```bibtex
-@article{atwal2026near,
-  title   = {Near–Real-Time Conflict-Related Fire Detection Using Unsupervised Deep Learning and Satellite Imagery},
-  author  = {Atwal, Kuldip Singh and Pfoser, Dieter and Rothbart, Daniel},
-  journal = {arXiv preprint arXiv:2512.07925},
-  year    = {2026}
+@article{atwal2022predicting,
+  title={Predicting building types using OpenStreetMap},
+  author={Atwal, Kuldip Singh and Anderson, Taylor and Pfoser, Dieter and Z{\"u}fle, Andreas},
+  journal={Scientific Reports},
+  volume={12},
+  number={1},
+  pages={19976},
+  year={2022},
+  publisher={Nature Publishing Group UK London}
 }
 ```
+
 ---
 
 ## Acknowledgements
 
-This work was conducted as part of the Sudan Conflict Observatory (SCO). The researchers involved in the SCO project include the authors of this article as well as the following analysts: Moneim Adam, Mathieu Bere, Hind Fadul, Anusha Srirenganathanmalarvizhi, Zifu Wang, David Wong and Chaowei Yang.
+This work is supported by the National Science Foundation Grant No. 2109647 titled “Data-Driven Modeling to Improve Understanding of Human Behavior, Mobility, and Disease Spread”
 
 Computing resources were provided by the Office of Research Computing at George Mason University.
